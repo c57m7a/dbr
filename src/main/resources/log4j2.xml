@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn">
+    <properties>
+        <property name="log-path">E:\Projects\Java\dbr\logs</property>
+    </properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%d{HH:mm:ss:SS} [%t] %highlight{%m%n}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=black, DEBUG=green bold, TRACE=blue}"
+            />
+        </Console>
+        <RollingFile
+                name="File"
+                fileName="logs/latest.log"
+                filePattern="logs/log-%i.log"
+        >
+            <PatternLayout pattern="%d{HH:mm:ss:SS} [%t] %c.%M%n  %-5p %m%n"/>
+            <OnStartupTriggeringPolicy minSize="0"/>
+            <DefaultRolloverStrategy min="1" max="5"/>
+        </RollingFile>
+    </Appenders>
+
+    <loggers>
+        <Logger name="org.hibernate.SQL">
+            <Appender-ref ref="File" level="info"/>
+        </Logger>
+        <Root level="warn">
+            <Appender-ref ref="Console" level="warn"/>
+            <Appender-ref ref="File" level="info"/>
+        </Root>
+    </loggers>
+</Configuration>
