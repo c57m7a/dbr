@@ -11,7 +11,7 @@ import javax.persistence.*
 @Entity @Table(name = "value")
 @Inheritance(strategy = InheritanceType.JOINED)
 open class TValue private constructor(
-        @ManyToOne(cascade = arrayOf(CascadeType.ALL))
+        @ManyToOne(cascade = arrayOf(CascadeType.ALL), optional = false)
         @JoinColumn(name = "type_id")
         val type: TType
 ) {
@@ -23,7 +23,7 @@ open class TValue private constructor(
         class TIntegerValue private constructor(intValue: IntegerValue) : TPrimitiveValue(TPrimitiveType.INT_TYPE) {
             companion object : ObjectCache<IntegerValue, TIntegerValue>(::TIntegerValue)
 
-            @Column val value: Int = intValue.value()
+            @Column(nullable = false) val value: Int = intValue.value()
         }
 
         @Entity @Table(name = "short_value")
@@ -31,7 +31,7 @@ open class TValue private constructor(
         class TShortValue private constructor(shortValue: ShortValue) : TPrimitiveValue(TPrimitiveType.SHORT_TYPE) {
             companion object : ObjectCache<ShortValue, TShortValue>(::TShortValue)
 
-            @Column val value: Short = shortValue.value()
+            @Column(nullable = false) val value: Short = shortValue.value()
         }
 
         @Entity @Table(name = "long_value")
@@ -39,7 +39,7 @@ open class TValue private constructor(
         class TLongValue private constructor(longValue: LongValue) : TPrimitiveValue(TPrimitiveType.LONG_TYPE) {
             companion object : ObjectCache<LongValue, TLongValue>(::TLongValue)
 
-            @Column val value: Long = longValue.value()
+            @Column(nullable = false) val value: Long = longValue.value()
         }
 
         @Entity @Table(name = "byte_value")
@@ -47,7 +47,7 @@ open class TValue private constructor(
         class TByteValue private constructor(byteValue: ByteValue) : TPrimitiveValue(TPrimitiveType.BYTE_TYPE) {
             companion object : ObjectCache<ByteValue, TByteValue>(::TByteValue)
 
-            @Column val value: Byte = byteValue.value()
+            @Column(nullable = false) val value: Byte = byteValue.value()
         }
 
         @Entity @Table(name = "boolean_value")
@@ -55,7 +55,7 @@ open class TValue private constructor(
         class TBooleanValue private constructor(booleanValue: BooleanValue) : TPrimitiveValue(TPrimitiveType.BOOLEAN_TYPE) {
             companion object : ObjectCache<BooleanValue, TBooleanValue>(::TBooleanValue)
 
-            @Column val value: Boolean = booleanValue.value()
+            @Column(nullable = false) val value: Boolean = booleanValue.value()
         }
 
         @Entity @Table(name = "char_value")
@@ -63,7 +63,7 @@ open class TValue private constructor(
         class TCharValue private constructor(charValue: CharValue) : TPrimitiveValue(TPrimitiveType.CHAR_TYPE) {
             companion object : ObjectCache<CharValue, TCharValue>(::TCharValue)
 
-            @Column val value: Char = charValue.value()
+            @Column(nullable = false) val value: Char = charValue.value()
         }
 
         @Entity @Table(name = "float_value")
@@ -71,7 +71,7 @@ open class TValue private constructor(
         class TFloatValue private constructor(floatValue: FloatValue) : TPrimitiveValue(TPrimitiveType.FLOAT_TYPE) {
             companion object : ObjectCache<FloatValue, TFloatValue>(::TFloatValue)
 
-            @Column val value: Float = floatValue.value()
+            @Column(nullable = false) val value: Float = floatValue.value()
         }
 
         @Entity @Table(name = "double_value")
@@ -79,7 +79,7 @@ open class TValue private constructor(
         class TDoubleValue private constructor(doubleValue: DoubleValue) : TPrimitiveValue(TPrimitiveType.DOUBLE_TYPE) {
             companion object : ObjectCache<DoubleValue, TDoubleValue>(::TDoubleValue)
 
-            @Column val value: Double = doubleValue.value()
+            @Column(nullable = false) val value: Double = doubleValue.value()
         }
 
         companion object {
@@ -102,7 +102,7 @@ open class TValue private constructor(
     open class TObjectReference private constructor(objectReference: ObjectReference)
         : TValue(TReferenceType[objectReference.referenceType()]) {
 
-        @Column(name = "unique_id")
+        @Column(name = "unique_id", nullable = false)
         val uniqueID = objectReference.uniqueID()
 
         @Entity @Table(name = "thread_group_ref")
@@ -110,11 +110,11 @@ open class TValue private constructor(
         class TThreadGroupReference private constructor(threadGroupReference: ThreadGroupReference) : TObjectReference(threadGroupReference) {
             companion object : ObjectCache<ThreadGroupReference, TThreadGroupReference>(::TThreadGroupReference)
 
-            @Column(name = "name")
+            @Column(name = "name", nullable = false)
             val name: String = threadGroupReference.name()
 
-            @ManyToOne(cascade = arrayOf(CascadeType.ALL))
-            @JoinColumn(name = "parent")
+            @ManyToOne(cascade = arrayOf(CascadeType.ALL), optional = true)
+            @JoinColumn(name = "parent_thread_group_ref_id")
             var parent: TThreadGroupReference? = null
 
             @OneToMany(cascade = arrayOf(CascadeType.ALL), mappedBy = "parent")
@@ -129,7 +129,7 @@ open class TValue private constructor(
         class TArrayReference private constructor(arrayReference: ArrayReference) : TObjectReference(arrayReference) {
             companion object : ObjectCache<ArrayReference, TArrayReference>(::TArrayReference)
 
-            @Column(name = "length")
+            @Column(name = "length", nullable = false)
             val length = arrayReference.length()
 
             @ManyToMany(cascade = arrayOf(CascadeType.ALL)) @JoinTable(
@@ -145,7 +145,7 @@ open class TValue private constructor(
         class TClassObjectReference private constructor(classObjectReference: ClassObjectReference) : TObjectReference(classObjectReference) {
             companion object : ObjectCache<ClassObjectReference, TClassObjectReference>(::TClassObjectReference)
 
-            @OneToOne(cascade = arrayOf(CascadeType.ALL))
+            @OneToOne(cascade = arrayOf(CascadeType.ALL), optional = false)
             @JoinColumn(name = "reflected_type_reference_type_id")
             val reflectedType = TReferenceType[classObjectReference.reflectedType()].also { it.classObject = this }
         }
@@ -155,7 +155,7 @@ open class TValue private constructor(
         class TStringReference private constructor(stringReference: StringReference) : TObjectReference(stringReference) {
             companion object : ObjectCache<StringReference, TStringReference>(::TStringReference)
 
-            @Column(name = "value", columnDefinition = "TEXT")
+            @Column(name = "value", columnDefinition = "TEXT", nullable = false)
             val value: String = stringReference.value()
         }
 
@@ -165,10 +165,11 @@ open class TValue private constructor(
             @OneToMany(cascade = arrayOf(CascadeType.ALL), mappedBy = "thread")
             val methodInvocationEvents: MutableList<TMethodInvocationEvent> = LinkedList()
 
-            @Column(name = "name")
+            @Column(name = "name", nullable = false)
             val name: String = threadReference.name()
 
-            @ManyToOne(cascade = arrayOf(CascadeType.ALL))
+            @ManyToOne(cascade = arrayOf(CascadeType.ALL), optional = true)
+            @JoinColumn(name = "thread_group_ref_id")
             var threadGroup: TThreadGroupReference? = null
 
             companion object : ObjectCache<ThreadReference, TThreadReference>(::TThreadReference)

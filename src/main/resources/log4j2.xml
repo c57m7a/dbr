@@ -24,7 +24,7 @@
         <Logger name="org.hibernate.SQL">
             <Appender-ref ref="File" level="info"/>
         </Logger>
-        <Root level="warn">
+        <Root level="debug">
             <Appender-ref ref="Console" level="warn"/>
             <Appender-ref ref="File" level="info"/>
         </Root>

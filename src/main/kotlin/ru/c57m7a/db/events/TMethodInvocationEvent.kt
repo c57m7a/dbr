@@ -23,11 +23,11 @@ class TMethodInvocationEvent(e: MethodEntryEvent) : TEvent(e) {
     val thread = TValue.TObjectReference.TThreadReference[e.thread()]
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "entryTime", nullable = false)
+    @Column(name = "entry_time", nullable = false)
     lateinit var entryTime: Date
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "exitTime", nullable = false)
+    @Column(name = "exit_time", nullable = false)
     lateinit var exitTime: Date
 
     @ManyToOne(cascade = arrayOf(CascadeType.ALL))

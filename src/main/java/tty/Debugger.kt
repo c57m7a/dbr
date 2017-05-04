@@ -5,7 +5,6 @@ import com.sun.jdi.VirtualMachine
 import com.sun.jdi.event.*
 import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.EventRequestManager
-import com.sun.tools.jdi.IntegerTypeImpl
 import org.hibernate.Session
 import org.hibernate.SessionFactory
 import org.hibernate.Transaction
@@ -22,7 +21,7 @@ class Debugger(sessionFactory: SessionFactory) : EventNotifier, AutoCloseable {
     val session: Session = sessionFactory.openSession()
     val transaction: Transaction = session.beginTransaction()
     val eventHandler = EventHandler(this, true)
-    val erm: EventRequestManager = Env.vm().eventRequestManager()
+    val erm: EventRequestManager by lazy { Env.vm().eventRequestManager() }
     val threadsStacks = HashMap<ThreadReference, Stack<TMethodInvocationEvent>>()
     private val objectsToPersist = ArrayList<Any>()
 
@@ -112,7 +111,6 @@ class Debugger(sessionFactory: SessionFactory) : EventNotifier, AutoCloseable {
             return false
         } else {
             threadStack.remove(methodInvocation)
-            logger.debug("[$eventThread] -= $methodInvocation, all: $threadStack")
         }
 
         methodInvocation.exitTime = exitTime
@@ -128,7 +126,8 @@ class Debugger(sessionFactory: SessionFactory) : EventNotifier, AutoCloseable {
 }
 
 fun main(args: Array<String>) {
-    hibernateConfiguration.buildSessionFactory().use { sessionFactory ->
+    val sessionFactory = hibernateConfiguration.buildSessionFactory()
+    sessionFactory.use { sessionFactory ->
         initDebugger()
         Debugger(sessionFactory).use { debugger ->
             Env.vm().resume()

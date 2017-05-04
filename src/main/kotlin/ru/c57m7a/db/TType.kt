@@ -10,10 +10,10 @@ import javax.persistence.*
 @Entity @Table(name = "type")
 @Inheritance(strategy = InheritanceType.JOINED)
 open class TType private constructor(
-        @Column(name = "name")
+        @Column(name = "name", nullable = false)
         val name: String,
 
-        @Column(name = "signature")
+        @Column(name = "signature", nullable = false)
         val signature: String
 ) {
     constructor(type: Type) : this(type.name(), type.signature())
@@ -38,53 +38,53 @@ open class TType private constructor(
         }
 
         @Temporal(TemporalType.TIMESTAMP)
-        @Column(name = "loaded_at")
+        @Column(name = "loaded_at", nullable = false)
         val loadedAt = Date()
 
         /* Accessible */
 
-        @Column(name = "is_private")
+        @Column(name = "is_private", nullable = false)
         val isPrivate = referenceType.isPrivate
 
-        @Column(name = "is_package_private")
+        @Column(name = "is_package_private", nullable = false)
         val isPackagePrivate = referenceType.isPackagePrivate
 
-        @Column(name = "is_protected")
+        @Column(name = "is_protected", nullable = false)
         val isProtected = referenceType.isProtected
 
-        @Column(name = "is_public")
+        @Column(name = "is_public", nullable = false)
         val isPublic = referenceType.isPublic
 
         /* ReferenceType */
-        @ManyToOne(cascade = arrayOf(CascadeType.ALL))
+        @ManyToOne(cascade = arrayOf(CascadeType.ALL), optional = true)
         @JoinColumn(name = "class_loader_id")
         var classLoader: TValue.TObjectReference.TClassLoaderReference? = null
 
-        @Column(name = "source_name")
+        @Column(name = "source_name", nullable = true)
         val sourceName = tryOrNull<String, AbsentInformationException> { referenceType.sourceName() }
 
-        @Column(name = "source_debug_extension")
+        @Column(name = "source_debug_extension", nullable = true)
         val sourceDebugExtension = tryOrNull<String, AbsentInformationException> { referenceType.sourceDebugExtension() }
 
-        @Column(name = "is_static")
+        @Column(name = "is_static", nullable = false)
         val isStatic = referenceType.isStatic
 
-        @Column(name = "is_abstract")
+        @Column(name = "is_abstract", nullable = false)
         val isAbstract = referenceType.isAbstract
 
-        @Column(name = "is_final")
+        @Column(name = "is_final", nullable = false)
         val isFinal = referenceType.isFinal
 
-        @Column(name = "is_prepared")
+        @Column(name = "is_prepared", nullable = false)
         val isPrepared = referenceType.isPrepared
 
-        @Column(name = "is_verified")
+        @Column(name = "is_verified", nullable = false)
         val isVerified = referenceType.isVerified
 
-        @Column(name = "is_initialized")
+        @Column(name = "is_initialized", nullable = false)
         val isInitialized = referenceType.isInitialized
 
-        @Column(name = "is_failed_to_initialize")
+        @Column(name = "is_failed_to_initialize", nullable = false)
         val isFailedToInitialize = referenceType.failedToInitialize()
 
         @OneToMany(cascade = arrayOf(CascadeType.ALL), mappedBy = "declaringType")
@@ -93,18 +93,18 @@ open class TType private constructor(
         @OneToMany(cascade = arrayOf(CascadeType.ALL), mappedBy = "declaringType")
         val methods = tryOrNull<List<TMethod>, ClassNotPreparedException> { referenceType.methods().map { TMethod[it].also { it.declaringType = this } } }
 
-        @ManyToOne(cascade = arrayOf(CascadeType.ALL))
-        @JoinColumn(name = "base_type_reference_type_id")
+        @ManyToOne(cascade = arrayOf(CascadeType.ALL), optional = true)
+        @JoinColumn(name = "base_reference_type_id")
         var baseType: TType.TReferenceType? = null
 
         @OneToMany(cascade = arrayOf(CascadeType.ALL), mappedBy = "baseType")
-        val nestedTypes = referenceType.nestedTypes().map { TType.TReferenceType.Companion[it].also { it.baseType = this } }
+        val nestedTypes = referenceType.nestedTypes().map { TType.TReferenceType[it].also { it.baseType = this } }
 
-        @OneToOne(cascade = arrayOf(CascadeType.ALL), mappedBy = "reflectedType")
+        @OneToOne(cascade = arrayOf(CascadeType.ALL), mappedBy = "reflectedType", optional = true)
         var classObject: TValue.TObjectReference.TClassObjectReference? = null
 
         @OneToMany(cascade = arrayOf(CascadeType.ALL), mappedBy = "declaringType")
-        val lineLocations = tryOrNull<List<TLocation>, ClassNotPreparedException> { referenceType.allLineLocations().map { TLocation.Companion[it].also { it.declaringType = this } } }
+        val lineLocations = tryOrNull<List<TLocation>, ClassNotPreparedException> { referenceType.allLineLocations().map { TLocation[it].apply { assert(referenceType == this@TReferenceType) } } }
 
         open class SignatureObjectCache<in K : ReferenceType, V : TType.TReferenceType> protected constructor(default: (K) -> V)
             : ForeignKeyObjectCache<K, String, V>(default, ReferenceType::signature)
@@ -114,7 +114,7 @@ open class TType private constructor(
         class TClassType private constructor(classType: ClassType) : TReferenceType(classType) {
             companion object : SignatureObjectCache<ClassType, TClassType>(::TClassType)
 
-            @ManyToOne(cascade = arrayOf(CascadeType.ALL))
+            @ManyToOne(cascade = arrayOf(CascadeType.ALL), optional = true)
             @JoinColumn(name = "superclass_class_type_id")
             var superclass: TClassType? = null
 
@@ -124,7 +124,7 @@ open class TType private constructor(
             @OneToMany(cascade = arrayOf(CascadeType.ALL), mappedBy = "superclass")
             val subclasses = tryOrNull<List<TClassType>, ClassNotPreparedException> { classType.subclasses().map { TClassType[it].also { it.superclass = this } } }
 
-            @Column(name = "is_enum")
+            @Column(name = "is_enum", nullable = false)
             val isEnum = classType.isEnum
         }
 
@@ -156,10 +156,10 @@ open class TType private constructor(
         class TArrayType private constructor(arrayType: ArrayType) : TReferenceType(arrayType) {
             companion object : SignatureObjectCache<ArrayType, TArrayType>(::TArrayType)
 
-            @Column(name = "component_signature")
+            @Column(name = "component_signature", nullable = false)
             val componentSignature: String = arrayType.componentSignature()
 
-            @Column(name = "component_type_name")
+            @Column(name = "component_type_name", nullable = false)
             val componentTypeName: String = arrayType.componentTypeName()
         }
     }

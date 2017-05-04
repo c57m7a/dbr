@@ -15,6 +15,7 @@ class TLocalVariable private constructor (localVariable: LocalVariable) {
     val typeName: String = localVariable.typeName()
 
     @ManyToOne(cascade = arrayOf(CascadeType.ALL), optional = false)
+    @JoinColumn(name = "declaring_method_id")
     lateinit var declaringMethod: TMethod
 
     @ManyToOne(cascade = arrayOf(CascadeType.ALL))

@@ -10,6 +10,8 @@ import javax.persistence.*
 
 @Entity @Table(name = "field_event")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "event_type", discriminatorType = DiscriminatorType.CHAR)
+@DiscriminatorValue("?") //default
 open class TFieldEvent private constructor(e: WatchpointEvent): TEvent(e) {
     @Id @GeneratedValue @Column(name = "field_event_id") val id = 0
 
@@ -33,10 +35,10 @@ open class TFieldEvent private constructor(e: WatchpointEvent): TEvent(e) {
     @JoinColumn(name = "value_id", nullable = true)
     val value = e.valueCurrent()?.let { TValue[it] }
 
-    @Entity @DiscriminatorValue(value = "field_read")
+    @Entity @DiscriminatorValue(value = "r")
     class TFieldAccessEvent(e: AccessWatchpointEvent) : TFieldEvent(e)
 
-    @Entity @DiscriminatorValue(value = "field_write")
+    @Entity @DiscriminatorValue(value = "w")
     class TFieldModificationEvent(e: ModificationWatchpointEvent) : TFieldEvent(e) {
         @ManyToOne(cascade = arrayOf(CascadeType.ALL))
         @JoinColumn(name = "new_value_id", nullable = true)
