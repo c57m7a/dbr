@@ -28,12 +28,6 @@ class TField private constructor(field: Field) {
     @Column(name = "name", nullable = false)
     val name: String = field.name()
 
-    @Column(name = "signature", nullable = false)
-    val signature: String = field.signature()
-
-    @Column(name = "generic_signature", nullable = true)
-    val genericSignature: String? = field.genericSignature()
-
     @ManyToOne(cascade = arrayOf(CascadeType.ALL))
     @JoinColumn(name = "declaring_reference_type_id", nullable = false)
     var declaringType: TReferenceType? = null
@@ -48,9 +42,6 @@ class TField private constructor(field: Field) {
     val isSynthetic = field.isSynthetic
 
     /* Field */
-    @Column(name = "type_name", nullable = false)
-    val typeName: String = field.typeName()
-
     @ManyToOne(cascade = arrayOf(CascadeType.ALL))
     @JoinColumn(name = "type_id", nullable = true)
     val type = tryOrNull<TType, ClassNotLoadedException> { TType[field.type()] }

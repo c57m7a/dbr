@@ -11,9 +11,6 @@ class TLocalVariable private constructor (localVariable: LocalVariable) {
     @Column(name = "name", nullable = false)
     val name: String = localVariable.name()
 
-    @Column(name = "type_name", nullable = false)
-    val typeName: String = localVariable.typeName()
-
     @ManyToOne(cascade = arrayOf(CascadeType.ALL), optional = false)
     @JoinColumn(name = "declaring_method_id")
     lateinit var declaringMethod: TMethod
@@ -21,12 +18,6 @@ class TLocalVariable private constructor (localVariable: LocalVariable) {
     @ManyToOne(cascade = arrayOf(CascadeType.ALL))
     @JoinColumn(name = "type_id", nullable = false)
     val type = TType[localVariable.type()]
-
-    @Column(name = "signature", nullable = false)
-    val signature: String = localVariable.signature()
-
-    @Column(name = "generic_signature", nullable = true)
-    val genericSignature: String? = localVariable.genericSignature()
 
     @Column(name = "is_argument", nullable = false)
     val isArgument = localVariable.isArgument

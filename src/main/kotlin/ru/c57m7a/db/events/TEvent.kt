@@ -8,8 +8,8 @@ import javax.persistence.Temporal
 import javax.persistence.TemporalType
 
 @MappedSuperclass
-abstract class TEvent(e: Event) {
+abstract class TEvent(@Suppress("UNUSED_PARAMETER") e: Event) {
     @Temporal(value = TemporalType.TIMESTAMP)
-    @Column(name = "date", nullable = false)
-    val date = Date()
+    @Column(name = "time", nullable = false)
+    val time = Date()
 }

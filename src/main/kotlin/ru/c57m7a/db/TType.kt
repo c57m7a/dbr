@@ -20,6 +20,14 @@ open class TType private constructor(
 
     companion object : ObjectCache<Type, TType>(::TType) {
         val VOID_TYPE = TType("void", "V")
+        val BOOLEAN_TYPE = TType("boolean", "Z")
+        val BYTE_TYPE = TType("byte", "B")
+        val CHAR_TYPE = TType("char", "C")
+        val SHORT_TYPE = TType("short", "S")
+        val INT_TYPE = TType("int", "I")
+        val LONG_TYPE = TType("long", "J")
+        val FLOAT_TYPE = TType("float", "F")
+        val DOUBLE_TYPE = TType("double", "D")
     }
 
     @Id @GeneratedValue @Column(name = "type_id") val id = 0
@@ -104,7 +112,7 @@ open class TType private constructor(
         var classObject: TValue.TObjectReference.TClassObjectReference? = null
 
         @OneToMany(cascade = arrayOf(CascadeType.ALL), mappedBy = "declaringType")
-        val lineLocations = tryOrNull<List<TLocation>, ClassNotPreparedException> { referenceType.allLineLocations().map { TLocation[it].apply { assert(referenceType == this@TReferenceType) } } }
+        val lineLocations = tryOrNull<List<TLocation>, ClassNotPreparedException> { referenceType.allLineLocations().map { TLocation[it].also { it.declaringType = this } } }
 
         open class SignatureObjectCache<in K : ReferenceType, V : TType.TReferenceType> protected constructor(default: (K) -> V)
             : ForeignKeyObjectCache<K, String, V>(default, ReferenceType::signature)
@@ -161,21 +169,6 @@ open class TType private constructor(
 
             @Column(name = "component_type_name", nullable = false)
             val componentTypeName: String = arrayType.componentTypeName()
-        }
-    }
-
-    @Entity @Table(name = "primitive_type")
-    @PrimaryKeyJoinColumn(name = "primitive_type_id", referencedColumnName = "type_id")
-    class TPrimitiveType private constructor(name: String, signature: String) : TType(name, signature) {
-        companion object {
-            val BOOLEAN_TYPE = TPrimitiveType("boolean", "Z")
-            val BYTE_TYPE = TPrimitiveType("byte", "B")
-            val CHAR_TYPE = TPrimitiveType("char", "C")
-            val SHORT_TYPE = TPrimitiveType("short", "S")
-            val INT_TYPE = TPrimitiveType("int", "I")
-            val LONG_TYPE = TPrimitiveType("long", "J")
-            val FLOAT_TYPE = TPrimitiveType("float", "F")
-            val DOUBLE_TYPE = TPrimitiveType("double", "D")
         }
     }
 }

@@ -1,7 +1,6 @@
 package ru.c57m7a.db
 
 import com.sun.jdi.*
-import ru.c57m7a.db.TType.TPrimitiveType
 import ru.c57m7a.db.TType.TReferenceType
 import ru.c57m7a.db.events.TMethodInvocationEvent
 import ru.c57m7a.utils.ObjectCache
@@ -17,10 +16,10 @@ open class TValue private constructor(
 ) {
     @Id @GeneratedValue @Column(name = "value_id") val id = 0
 
-    sealed class TPrimitiveValue(primitiveType: TPrimitiveType) : TValue(primitiveType) {
+    sealed class TPrimitiveValue(primitiveType: TType) : TValue(primitiveType) {
         @Entity @Table(name = "int_value")
         @PrimaryKeyJoinColumn(name = "int_value_id", referencedColumnName = "value_id")
-        class TIntegerValue private constructor(intValue: IntegerValue) : TPrimitiveValue(TPrimitiveType.INT_TYPE) {
+        class TIntegerValue private constructor(intValue: IntegerValue) : TPrimitiveValue(TType.INT_TYPE) {
             companion object : ObjectCache<IntegerValue, TIntegerValue>(::TIntegerValue)
 
             @Column(nullable = false) val value: Int = intValue.value()
@@ -28,7 +27,7 @@ open class TValue private constructor(
 
         @Entity @Table(name = "short_value")
         @PrimaryKeyJoinColumn(name = "short_value_id", referencedColumnName = "value_id")
-        class TShortValue private constructor(shortValue: ShortValue) : TPrimitiveValue(TPrimitiveType.SHORT_TYPE) {
+        class TShortValue private constructor(shortValue: ShortValue) : TPrimitiveValue(TType.SHORT_TYPE) {
             companion object : ObjectCache<ShortValue, TShortValue>(::TShortValue)
 
             @Column(nullable = false) val value: Short = shortValue.value()
@@ -36,7 +35,7 @@ open class TValue private constructor(
 
         @Entity @Table(name = "long_value")
         @PrimaryKeyJoinColumn(name = "long_value_id", referencedColumnName = "value_id")
-        class TLongValue private constructor(longValue: LongValue) : TPrimitiveValue(TPrimitiveType.LONG_TYPE) {
+        class TLongValue private constructor(longValue: LongValue) : TPrimitiveValue(TType.LONG_TYPE) {
             companion object : ObjectCache<LongValue, TLongValue>(::TLongValue)
 
             @Column(nullable = false) val value: Long = longValue.value()
@@ -44,7 +43,7 @@ open class TValue private constructor(
 
         @Entity @Table(name = "byte_value")
         @PrimaryKeyJoinColumn(name = "byte_value_id", referencedColumnName = "value_id")
-        class TByteValue private constructor(byteValue: ByteValue) : TPrimitiveValue(TPrimitiveType.BYTE_TYPE) {
+        class TByteValue private constructor(byteValue: ByteValue) : TPrimitiveValue(TType.BYTE_TYPE) {
             companion object : ObjectCache<ByteValue, TByteValue>(::TByteValue)
 
             @Column(nullable = false) val value: Byte = byteValue.value()
@@ -52,7 +51,7 @@ open class TValue private constructor(
 
         @Entity @Table(name = "boolean_value")
         @PrimaryKeyJoinColumn(name = "boolean_value_id", referencedColumnName = "value_id")
-        class TBooleanValue private constructor(booleanValue: BooleanValue) : TPrimitiveValue(TPrimitiveType.BOOLEAN_TYPE) {
+        class TBooleanValue private constructor(booleanValue: BooleanValue) : TPrimitiveValue(TType.BOOLEAN_TYPE) {
             companion object : ObjectCache<BooleanValue, TBooleanValue>(::TBooleanValue)
 
             @Column(nullable = false) val value: Boolean = booleanValue.value()
@@ -60,7 +59,7 @@ open class TValue private constructor(
 
         @Entity @Table(name = "char_value")
         @PrimaryKeyJoinColumn(name = "char_value_id", referencedColumnName = "value_id")
-        class TCharValue private constructor(charValue: CharValue) : TPrimitiveValue(TPrimitiveType.CHAR_TYPE) {
+        class TCharValue private constructor(charValue: CharValue) : TPrimitiveValue(TType.CHAR_TYPE) {
             companion object : ObjectCache<CharValue, TCharValue>(::TCharValue)
 
             @Column(nullable = false) val value: Char = charValue.value()
@@ -68,7 +67,7 @@ open class TValue private constructor(
 
         @Entity @Table(name = "float_value")
         @PrimaryKeyJoinColumn(name = "float_value_id", referencedColumnName = "value_id")
-        class TFloatValue private constructor(floatValue: FloatValue) : TPrimitiveValue(TPrimitiveType.FLOAT_TYPE) {
+        class TFloatValue private constructor(floatValue: FloatValue) : TPrimitiveValue(TType.FLOAT_TYPE) {
             companion object : ObjectCache<FloatValue, TFloatValue>(::TFloatValue)
 
             @Column(nullable = false) val value: Float = floatValue.value()
@@ -76,7 +75,7 @@ open class TValue private constructor(
 
         @Entity @Table(name = "double_value")
         @PrimaryKeyJoinColumn(name = "double_value_id", referencedColumnName = "value_id")
-        class TDoubleValue private constructor(doubleValue: DoubleValue) : TPrimitiveValue(TPrimitiveType.DOUBLE_TYPE) {
+        class TDoubleValue private constructor(doubleValue: DoubleValue) : TPrimitiveValue(TType.DOUBLE_TYPE) {
             companion object : ObjectCache<DoubleValue, TDoubleValue>(::TDoubleValue)
 
             @Column(nullable = false) val value: Double = doubleValue.value()
@@ -85,14 +84,14 @@ open class TValue private constructor(
         companion object {
             operator fun get(primitiveValue: PrimitiveValue) = when (primitiveValue) {
                 is IntegerValue -> TIntegerValue[primitiveValue]
-                is ShortValue -> TShortValue[primitiveValue]
-                is LongValue -> TLongValue[primitiveValue]
-                is ByteValue -> TByteValue[primitiveValue]
                 is BooleanValue -> TBooleanValue[primitiveValue]
                 is CharValue -> TCharValue[primitiveValue]
-                is FloatValue -> TFloatValue[primitiveValue]
                 is DoubleValue -> TDoubleValue[primitiveValue]
-                else -> throw ClassCastException("Unknown primitive type")
+                is LongValue -> TLongValue[primitiveValue]
+                is FloatValue -> TFloatValue[primitiveValue]
+                is ByteValue -> TByteValue[primitiveValue]
+                is ShortValue -> TShortValue[primitiveValue]
+                else -> throw ClassCastException("Unknown primitiveValue type ${primitiveValue::class.qualifiedName}")
             }
         }
     }
@@ -129,7 +128,7 @@ open class TValue private constructor(
         class TArrayReference private constructor(arrayReference: ArrayReference) : TObjectReference(arrayReference) {
             companion object : ObjectCache<ArrayReference, TArrayReference>(::TArrayReference)
 
-            @Column(name = "length", nullable = false)
+            @Column(name = "length", nullable = false, columnDefinition = "int4 check (length >= 0)")
             val length = arrayReference.length()
 
             @ManyToMany(cascade = arrayOf(CascadeType.ALL)) @JoinTable(

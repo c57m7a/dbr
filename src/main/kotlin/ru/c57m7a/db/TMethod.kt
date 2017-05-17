@@ -1,17 +1,13 @@
 package ru.c57m7a.db
 
-import com.sun.jdi.*
+import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.ClassNotLoadedException
+import com.sun.jdi.Method
 import ru.c57m7a.db.TType.TReferenceType
-import ru.c57m7a.db.TValue.*
-import ru.c57m7a.db.TValue.TObjectReference.TThreadReference.*
-import ru.c57m7a.db.TValue.TObjectReference.TThreadReference
 import ru.c57m7a.db.events.TMethodInvocationEvent
 import ru.c57m7a.utils.ObjectCache
-import ru.c57m7a.utils.logger
 import ru.c57m7a.utils.tryOrNull
-import java.util.*
 import javax.persistence.*
-import kotlin.jvm.Transient
 
 @Entity @Table(name = "method")
 class TMethod private constructor(@Transient private val method: Method) {
@@ -47,8 +43,8 @@ class TMethod private constructor(@Transient private val method: Method) {
 
     /* Method */
     @ManyToOne(cascade = arrayOf(CascadeType.ALL))
-    @JoinColumn(name = "return_type_id", nullable = false)
-    val returnType = TType[method.returnType()]
+    @JoinColumn(name = "return_type_id", nullable = true)
+    val returnType = tryOrNull<TType, ClassNotLoadedException> { TType[method.returnType()] }
 
     @Column(name = "is_abstract", nullable = false)
     val isAbstract = method.isAbstract

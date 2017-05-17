@@ -11,6 +11,8 @@ import org.hibernate.Transaction
 import org.hibernate.cfg.Configuration
 import ru.c57m7a.db.*
 import ru.c57m7a.db.events.*
+import ru.c57m7a.db.events.TThreadEvent.TThreadDeathEvent
+import ru.c57m7a.db.events.TThreadEvent.TThreadStartEvent
 import ru.c57m7a.utils.logger
 import ru.c57m7a.utils.onEach
 import ru.c57m7a.utils.stdInScanner
@@ -21,9 +23,9 @@ class Debugger(sessionFactory: SessionFactory) : EventNotifier, AutoCloseable {
     val session: Session = sessionFactory.openSession()
     val transaction: Transaction = session.beginTransaction()
     val eventHandler = EventHandler(this, true)
-    val erm: EventRequestManager by lazy { Env.vm().eventRequestManager() }
+    val erm: EventRequestManager = Env.vm().eventRequestManager()
     val threadsStacks = HashMap<ThreadReference, Stack<TMethodInvocationEvent>>()
-    private val objectsToPersist = ArrayList<Any>()
+    val objectsToPersist = ArrayList<Any>()
 
     override fun close() {
         eventHandler.shutdown()
@@ -73,9 +75,7 @@ class Debugger(sessionFactory: SessionFactory) : EventNotifier, AutoCloseable {
         objectsToPersist += TFieldEvent[e]
     }
 
-    override fun stepEvent(e: StepEvent) {
-        objectsToPersist += TStepEvent(e)
-    }
+    override fun stepEvent(e: StepEvent) {}
 
     override fun exceptionEvent(e: ExceptionEvent): Boolean {
         objectsToPersist += TExceptionEvent(e)
@@ -83,10 +83,8 @@ class Debugger(sessionFactory: SessionFactory) : EventNotifier, AutoCloseable {
     }
 
     override fun methodEntryEvent(e: MethodEntryEvent) {
-        val entryTime = Date()
-        val tMethod = TMethod[e.method()]
         val tMethodInvocation = TMethodInvocationEvent(e).also {
-            it.entryTime = entryTime
+            val tMethod = TMethod[e.method()]
             tMethod.methodInvocations += it
         }
         val eventThread = e.thread()
@@ -126,7 +124,7 @@ class Debugger(sessionFactory: SessionFactory) : EventNotifier, AutoCloseable {
 }
 
 fun main(args: Array<String>) {
-    val sessionFactory = hibernateConfiguration.buildSessionFactory()
+    val sessionFactory = getHibernateConfiguration().buildSessionFactory()
     sessionFactory.use { sessionFactory ->
         initDebugger()
         Debugger(sessionFactory).use { debugger ->
@@ -138,52 +136,50 @@ fun main(args: Array<String>) {
     }
 }
 
-private val hibernateConfiguration
-    get() = Configuration().apply {
-        setProperty("hibernate.connection.driver_class", "org.postgresql.Driver")
-        setProperty("hibernate.connection.url", "jdbc:postgresql://localhost/postgres:5432")
-        setProperty("hibernate.connection.username", "nikita")
-        setProperty("hibernate.connection.password", "")
-        setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect")
-        setProperty("hibernate.hbm2ddl.auto", "create")
+private fun getHibernateConfiguration() = Configuration().apply {
+    setProperty("hibernate.connection.driver_class", "org.postgresql.Driver")
+    setProperty("hibernate.connection.url", "jdbc:postgresql://localhost/postgres:5432")
+    setProperty("hibernate.connection.username", "nikita")
+    setProperty("hibernate.connection.password", "")
+    setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect")
+    setProperty("hibernate.hbm2ddl.auto", "create")
 
-        addAnnotatedClass(TField::class.java)
-        addAnnotatedClass(TLocalVariable::class.java)
-        addAnnotatedClass(TLocation::class.java)
-        addAnnotatedClass(TMethod::class.java)
-        addAnnotatedClass(TType::class.java)
-        addAnnotatedClass(TType.TReferenceType::class.java)
-        addAnnotatedClass(TType.TReferenceType.TClassType::class.java)
-        addAnnotatedClass(TType.TReferenceType.TArrayType::class.java)
-        addAnnotatedClass(TType.TReferenceType.TInterfaceType::class.java)
-        addAnnotatedClass(TType.TPrimitiveType::class.java)
-        addAnnotatedClass(TValue::class.java)
-        addAnnotatedClass(TValue.TPrimitiveValue.TBooleanValue::class.java)
-        addAnnotatedClass(TValue.TPrimitiveValue.TByteValue::class.java)
-        addAnnotatedClass(TValue.TPrimitiveValue.TCharValue::class.java)
-        addAnnotatedClass(TValue.TPrimitiveValue.TDoubleValue::class.java)
-        addAnnotatedClass(TValue.TPrimitiveValue.TFloatValue::class.java)
-        addAnnotatedClass(TValue.TPrimitiveValue.TIntegerValue::class.java)
-        addAnnotatedClass(TValue.TPrimitiveValue.TLongValue::class.java)
-        addAnnotatedClass(TValue.TPrimitiveValue.TShortValue::class.java)
-        addAnnotatedClass(TValue.TObjectReference::class.java)
-        addAnnotatedClass(TValue.TObjectReference.TArrayReference::class.java)
-        addAnnotatedClass(TValue.TObjectReference.TClassLoaderReference::class.java)
-        addAnnotatedClass(TValue.TObjectReference.TClassObjectReference::class.java)
-        addAnnotatedClass(TValue.TObjectReference.TStringReference::class.java)
-        addAnnotatedClass(TValue.TObjectReference.TThreadReference::class.java)
-        addAnnotatedClass(TValue.TObjectReference.TThreadGroupReference::class.java)
-        addAnnotatedClass(TBreakpointEvent::class.java)
-        addAnnotatedClass(TEvent::class.java)
-        addAnnotatedClass(TExceptionEvent::class.java)
-        addAnnotatedClass(TStepEvent::class.java)
-        addAnnotatedClass(TThreadStartEvent::class.java)
-        addAnnotatedClass(TThreadDeathEvent::class.java)
-        addAnnotatedClass(TFieldEvent::class.java)
-        addAnnotatedClass(TFieldEvent.TFieldAccessEvent::class.java)
-        addAnnotatedClass(TFieldEvent.TFieldModificationEvent::class.java)
-        addAnnotatedClass(TMethodInvocationEvent::class.java)
-    }
+    addAnnotatedClass(TField::class.java)
+    addAnnotatedClass(TLocalVariable::class.java)
+    addAnnotatedClass(TLocation::class.java)
+    addAnnotatedClass(TMethod::class.java)
+    addAnnotatedClass(TType::class.java)
+    addAnnotatedClass(TType.TReferenceType::class.java)
+    addAnnotatedClass(TType.TReferenceType.TClassType::class.java)
+    addAnnotatedClass(TType.TReferenceType.TArrayType::class.java)
+    addAnnotatedClass(TType.TReferenceType.TInterfaceType::class.java)
+    addAnnotatedClass(TValue::class.java)
+    addAnnotatedClass(TValue.TPrimitiveValue.TBooleanValue::class.java)
+    addAnnotatedClass(TValue.TPrimitiveValue.TByteValue::class.java)
+    addAnnotatedClass(TValue.TPrimitiveValue.TCharValue::class.java)
+    addAnnotatedClass(TValue.TPrimitiveValue.TDoubleValue::class.java)
+    addAnnotatedClass(TValue.TPrimitiveValue.TFloatValue::class.java)
+    addAnnotatedClass(TValue.TPrimitiveValue.TIntegerValue::class.java)
+    addAnnotatedClass(TValue.TPrimitiveValue.TLongValue::class.java)
+    addAnnotatedClass(TValue.TPrimitiveValue.TShortValue::class.java)
+    addAnnotatedClass(TValue.TObjectReference::class.java)
+    addAnnotatedClass(TValue.TObjectReference.TArrayReference::class.java)
+    addAnnotatedClass(TValue.TObjectReference.TClassLoaderReference::class.java)
+    addAnnotatedClass(TValue.TObjectReference.TClassObjectReference::class.java)
+    addAnnotatedClass(TValue.TObjectReference.TStringReference::class.java)
+    addAnnotatedClass(TValue.TObjectReference.TThreadReference::class.java)
+    addAnnotatedClass(TValue.TObjectReference.TThreadGroupReference::class.java)
+    addAnnotatedClass(TBreakpointEvent::class.java)
+    addAnnotatedClass(TEvent::class.java)
+    addAnnotatedClass(TExceptionEvent::class.java)
+    addAnnotatedClass(TThreadEvent::class.java)
+    addAnnotatedClass(TThreadEvent.TThreadStartEvent::class.java)
+    addAnnotatedClass(TThreadEvent.TThreadDeathEvent::class.java)
+    addAnnotatedClass(TFieldEvent::class.java)
+    addAnnotatedClass(TFieldEvent.TFieldAccessEvent::class.java)
+    addAnnotatedClass(TFieldEvent.TFieldModificationEvent::class.java)
+    addAnnotatedClass(TMethodInvocationEvent::class.java)
+}
 
 private fun initDebugger() {
     MessageOutput.textResources = ResourceBundle.getBundle("tty.TTYResources", Locale.getDefault())
