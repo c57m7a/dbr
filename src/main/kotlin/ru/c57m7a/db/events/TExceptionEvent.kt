@@ -18,6 +18,10 @@ class TExceptionEvent(e: ExceptionEvent) : TEvent(e) {
     val catchLocation = e.catchLocation()?.let { TLocation[it] }
 
     @ManyToOne(cascade = arrayOf(CascadeType.ALL))
+    @JoinColumn(name = "catch_location_id", nullable = false)
+    val location = TLocation[e.location()]
+
+    @ManyToOne(cascade = arrayOf(CascadeType.ALL))
     @JoinColumn(name = "exception_obj_ref_id", nullable = false)
     val exception = TValue.TObjectReference[e.exception()]
 }
